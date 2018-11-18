@@ -27,6 +27,7 @@ import (
 
 const (
 	MEMORY_FLAG     = "memory"
+	CPUSET_FLAG     = "cpuset-cpus"
 	LOG_SIZE_FLAG   = "logsize"
 	TIMEOUT_FLAG    = "timeout"
 	WEB_FLAG        = "web"
@@ -138,6 +139,7 @@ type ActionFlags struct {
 	sequence  bool
 	timeout   int
 	memory    int
+	cpuset    string
 	logsize   int
 	result    bool
 	kind      string

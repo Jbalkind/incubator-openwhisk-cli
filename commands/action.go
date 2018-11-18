@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/apache/incubator-openwhisk-cli/wski18n"
-	"github.com/apache/incubator-openwhisk-client-go/whisk"
+	"github.com/jbalkind/incubator-openwhisk-client-go/whisk"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-colorable"
@@ -40,6 +40,7 @@ import (
 
 const (
 	MEMORY_LIMIT      = 256
+	CPUSET_LIMIT      = ""
 	TIMEOUT_LIMIT     = 60000
 	LOGSIZE_LIMIT     = 10
 	ACTIVATION_ID     = "activationId"
@@ -409,9 +410,11 @@ func parseAction(cmd *cobra.Command, args []string, update bool) (*whisk.Action,
 	action.Namespace = qualifiedName.GetNamespace()
 	action.Limits = getLimits(
 		cmd.LocalFlags().Changed(MEMORY_FLAG),
+		cmd.LocalFlags().Changed(CPUSET_FLAG),
 		cmd.LocalFlags().Changed(LOG_SIZE_FLAG),
 		cmd.LocalFlags().Changed(TIMEOUT_FLAG),
 		Flags.action.memory,
+		Flags.action.cpuset,
 		Flags.action.logsize,
 		Flags.action.timeout)
 
@@ -880,14 +883,18 @@ func webSecureSecret(webSecureMode string) interface{} {
 	}
 }
 
-func getLimits(memorySet bool, logSizeSet bool, timeoutSet bool, memory int, logSize int, timeout int) *whisk.Limits {
+func getLimits(memorySet bool, cpusetSet bool, logSizeSet bool, timeoutSet bool, memory int, cpuset string, logSize int, timeout int) *whisk.Limits {
 	var limits *whisk.Limits
 
-	if memorySet || logSizeSet || timeoutSet {
+	if memorySet || cpusetSet || logSizeSet || timeoutSet {
 		limits = new(whisk.Limits)
 
 		if memorySet {
 			limits.Memory = &memory
+		}
+
+		if cpusetSet {
+			limits.Cpuset = cpuset
 		}
 
 		if logSizeSet {
@@ -1261,6 +1268,7 @@ func init() {
 	actionCreateCmd.Flags().StringVar(&Flags.action.main, "main", "", wski18n.T("the name of the action entry point (function or fully-qualified method name when applicable)"))
 	actionCreateCmd.Flags().IntVarP(&Flags.action.timeout, TIMEOUT_FLAG, "t", TIMEOUT_LIMIT, wski18n.T("the timeout `LIMIT` in milliseconds after which the action is terminated"))
 	actionCreateCmd.Flags().IntVarP(&Flags.action.memory, MEMORY_FLAG, "m", MEMORY_LIMIT, wski18n.T("the maximum memory `LIMIT` in MB for the action"))
+	actionCreateCmd.Flags().StringVarP(&Flags.action.cpuset, CPUSET_FLAG, "", "", wski18n.T("the cpuset `LIMIT` string for the action"))
 	actionCreateCmd.Flags().IntVarP(&Flags.action.logsize, LOG_SIZE_FLAG, "l", LOGSIZE_LIMIT, wski18n.T("the maximum log size `LIMIT` in MB for the action"))
 	actionCreateCmd.Flags().StringSliceVarP(&Flags.common.annotation, "annotation", "a", nil, wski18n.T("annotation values in `KEY VALUE` format"))
 	actionCreateCmd.Flags().StringVarP(&Flags.common.annotFile, "annotation-file", "A", "", wski18n.T("`FILE` containing annotation values in JSON format"))
@@ -1277,6 +1285,7 @@ func init() {
 	actionUpdateCmd.Flags().StringVar(&Flags.action.main, "main", "", wski18n.T("the name of the action entry point (function or fully-qualified method name when applicable)"))
 	actionUpdateCmd.Flags().IntVarP(&Flags.action.timeout, TIMEOUT_FLAG, "t", TIMEOUT_LIMIT, wski18n.T("the timeout `LIMIT` in milliseconds after which the action is terminated"))
 	actionUpdateCmd.Flags().IntVarP(&Flags.action.memory, MEMORY_FLAG, "m", MEMORY_LIMIT, wski18n.T("the maximum memory `LIMIT` in MB for the action"))
+	actionUpdateCmd.Flags().StringVarP(&Flags.action.cpuset, CPUSET_FLAG, "", "", wski18n.T("the cpuset `LIMIT` string for the action"))
 	actionUpdateCmd.Flags().IntVarP(&Flags.action.logsize, LOG_SIZE_FLAG, "l", LOGSIZE_LIMIT, wski18n.T("the maximum log size `LIMIT` in MB for the action"))
 	actionUpdateCmd.Flags().StringSliceVarP(&Flags.common.annotation, "annotation", "a", []string{}, wski18n.T("annotation values in `KEY VALUE` format"))
 	actionUpdateCmd.Flags().StringVarP(&Flags.common.annotFile, "annotation-file", "A", "", wski18n.T("`FILE` containing annotation values in JSON format"))
